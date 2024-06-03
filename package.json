@@ -133,7 +133,7 @@
       "@electron/universal": "2.0.1",
       "@babel/runtime": "7.24.6",
       "eslint": "9.4.0",
-      "@typescript-eslint/parser": "8.0.0-alpha.24"
+      "@typescript-eslint/parser": "8.0.0-alpha.25"
     },
     "patchedDependencies": {
       "vudio@2.1.1": "patches/vudio@2.1.1.patch",
@@ -161,7 +161,7 @@
     "conf": "12.0.0",
     "custom-electron-prompt": "1.5.7",
     "dbus-next": "0.10.2",
-    "deepmerge-ts": "7.0.1",
+    "deepmerge-ts": "7.0.2",
     "electron-debug": "4.0.0",
     "electron-is": "3.0.0",
     "electron-localshortcut": "3.2.1",
@@ -199,7 +199,7 @@
     "@types/howler": "2.2.11",
     "@types/html-to-text": "9.0.4",
     "@types/semver": "7.5.8",
-    "@typescript-eslint/eslint-plugin": "8.0.0-alpha.24",
+    "@typescript-eslint/eslint-plugin": "8.0.0-alpha.25",
     "bufferutil": "4.0.8",
     "builtin-modules": "4.0.0",
     "cross-env": "7.0.3",
