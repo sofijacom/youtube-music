@@ -132,7 +132,7 @@
       "node-fetch": "3.3.2",
       "@electron/universal": "2.0.1",
       "@babel/runtime": "7.24.7",
-      "eslint": "9.4.0",
+      "eslint": "9.5.0",
       "@typescript-eslint/parser": "8.0.0-alpha.30"
     },
     "patchedDependencies": {
@@ -158,14 +158,14 @@
     "butterchurn": "3.0.0-beta.4",
     "butterchurn-presets": "3.0.0-beta.4",
     "color": "4.2.3",
-    "conf": "12.0.0",
+    "conf": "13.0.0",
     "custom-electron-prompt": "1.5.7",
     "dbus-next": "0.10.2",
     "deepmerge-ts": "7.0.3",
     "electron-debug": "4.0.0",
     "electron-is": "3.0.0",
     "electron-localshortcut": "3.2.1",
-    "electron-store": "9.0.0",
+    "electron-store": "10.0.0",
     "electron-unhandled": "4.0.1",
     "electron-updater": "6.2.1",
     "fast-average-color": "9.4.0",
@@ -189,7 +189,7 @@
     "ts-morph": "22.0.0",
     "vudio": "2.1.1",
     "x11": "2.3.0",
-    "youtubei.js": "9.4.0"
+    "youtubei.js": "10.0.0"
   },
   "devDependencies": {
     "@playwright/test": "1.44.1",
@@ -204,13 +204,13 @@
     "builtin-modules": "4.0.0",
     "cross-env": "7.0.3",
     "del-cli": "5.1.0",
-    "discord-api-types": "0.37.88",
+    "discord-api-types": "0.37.89",
     "electron": "31.0.1",
     "electron-builder": "24.13.3",
     "electron-devtools-installer": "3.2.0",
     "electron-vite": "2.2.0",
     "esbuild": "0.21.5",
-    "eslint": "9.4.0",
+    "eslint": "9.5.0",
     "eslint-import-resolver-exports": "1.0.0-beta.5",
     "eslint-import-resolver-typescript": "3.6.1",
     "eslint-plugin-import": "2.29.1",
@@ -221,11 +221,11 @@
     "rollup": "4.18.0",
     "typescript": "5.4.5",
     "utf-8-validate": "6.0.4",
-    "vite": "5.2.13",
+    "vite": "5.3.1",
     "vite-plugin-inspect": "0.8.4",
     "vite-plugin-resolve": "2.5.1",
     "vite-plugin-solid": "2.10.2",
-    "ws": "8.17.0"
+    "ws": "8.17.1"
   },
   "auto-changelog": {
     "hideCredit": true,
