@@ -47,9 +47,7 @@ export interface SongInfo {
 export const getImage = async (src: string): Promise<Electron.NativeImage> => {
   const result = await net.fetch(src);
   const output = nativeImage.createFromBuffer(
-    Buffer.from(
-      await result.arrayBuffer(),
-    ),
+    Buffer.from(await result.arrayBuffer()),
   );
   if (output.isEmpty() && !src.endsWith('.jpg') && src.includes('.jpg')) {
     // Fix hidden webp files (https://github.com/th-ch/youtube-music/issues/315)
@@ -214,14 +212,14 @@ const suffixesToRemove = [
   /\s*vevo$/i,
 
   // Video titles
-  /\s*[(|\[]official(.*?)[)|\]]/i, // (Official Music Video), [Official Visualizer], etc...
-  /\s*[(|\[]((lyrics?|visualizer|audio)\s*(video)?)[)|\]]/i,
-  /\s*[(|\[](performance video)[)|\]]/i,
-  /\s*[(|\[](clip official)[)|\]]/i,
-  /\s*[(|\[](video version)[)|\]]/i,
-  /\s*[(|\[](HD|HQ)\s*?(?:audio)?[)|\]]$/i,
-  /\s*[(|\[](live)[)|\]]$/i,
-  /\s*[(|\[]4K\s*?(?:upgrade)?[)|\]]$/i,
+  /\s*[(|[]official(.*?)[)|\]]/i, // (Official Music Video), [Official Visualizer], etc...
+  /\s*[(|[]((lyrics?|visualizer|audio)\s*(video)?)[)|\]]/i,
+  /\s*[(|[](performance video)[)|\]]/i,
+  /\s*[(|[](clip official)[)|\]]/i,
+  /\s*[(|[](video version)[)|\]]/i,
+  /\s*[(|[](HD|HQ)\s*?(?:audio)?[)|\]]$/i,
+  /\s*[(|[](live)[)|\]]$/i,
+  /\s*[(|[]4K\s*?(?:upgrade)?[)|\]]$/i,
 ];
 
 export function cleanupName(name: string): string {

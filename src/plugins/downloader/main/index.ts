@@ -1,12 +1,8 @@
-import {
-  existsSync,
-  mkdirSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 
-import { app, BrowserWindow, dialog } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain } from 'electron';
 import {
   ClientType,
   Innertube,
@@ -29,7 +25,12 @@ import {
 
 import { fetchFromGenius } from '@/plugins/lyrics-genius/main';
 import { isEnabled } from '@/config/plugins';
-import { cleanupName, getImage, MediaType, type SongInfo } from '@/providers/song-info';
+import registerCallback, {
+  cleanupName,
+  getImage,
+  MediaType,
+  type SongInfo,
+} from '@/providers/song-info';
 import { getNetFetchAsFetch } from '@/plugins/utils/main';
 
 import { t } from '@/i18n';
@@ -114,6 +115,8 @@ export const onMainLoad = async ({
   ipc.handle('download-playlist-request', async (url: string) =>
     downloadPlaylist(url),
   );
+
+  downloadSongOnFinishSetup({ ipc, getConfig });
 };
 
 export const onConfigChange = (newConfig: DownloaderPluginConfig) => {
@@ -160,6 +163,60 @@ export async function downloadSongFromId(
   } catch (error: unknown) {
     sendError(error as Error, resolvedName || id);
   }
+}
+
+function downloadSongOnFinishSetup({
+  ipc,
+}: Pick<BackendContext<DownloaderPluginConfig>, 'ipc' | 'getConfig'>) {
+  let currentUrl: string | undefined;
+  let duration: number | undefined;
+  let time = 0;
+
+  const defaultDownloadFolder = app.getPath('downloads');
+
+  registerCallback((songInfo: SongInfo) => {
+    if (
+      !songInfo.isPaused &&
+      songInfo.url !== currentUrl &&
+      config.downloadOnFinish?.enabled
+    ) {
+      if (typeof currentUrl === 'string' && duration && duration > 0) {
+        if (
+          config.downloadOnFinish.mode === 'seconds' &&
+          duration - time <= config.downloadOnFinish.seconds
+        ) {
+          downloadSong(
+            currentUrl,
+            config.downloadOnFinish.folder ??
+              config.downloadFolder ??
+              defaultDownloadFolder,
+          );
+        } else if (
+          config.downloadOnFinish.mode === 'percent' &&
+          time >= duration * (config.downloadOnFinish.percent / 100)
+        ) {
+          downloadSong(
+            currentUrl,
+            config.downloadOnFinish.folder ??
+              config.downloadFolder ??
+              defaultDownloadFolder,
+          );
+        }
+      }
+
+      currentUrl = songInfo.url;
+      duration = songInfo.songDuration;
+      time = 0;
+    }
+  });
+
+  ipcMain.on('ytmd:player-api-loaded', () => {
+    ipc.send('ytmd:setup-time-changed-listener');
+  });
+
+  ipcMain.on('ytmd:time-changed', (_, t: number) => {
+    if (t > time) time = t;
+  });
 }
 
 async function downloadSongUnsafe(
@@ -216,12 +273,12 @@ async function downloadSongUnsafe(
 
   let playabilityStatus = info.playability_status;
   let bypassedResult = null;
-  if (playabilityStatus.status === 'LOGIN_REQUIRED') {
+  if (playabilityStatus?.status === 'LOGIN_REQUIRED') {
     // Try to bypass the age restriction
     bypassedResult = await getAndroidTvInfo(id);
     playabilityStatus = bypassedResult.playability_status;
 
-    if (playabilityStatus.status === 'LOGIN_REQUIRED') {
+    if (playabilityStatus?.status === 'LOGIN_REQUIRED') {
       throw new Error(
         `[${playabilityStatus.status}] ${playabilityStatus.reason}`,
       );
@@ -230,7 +287,7 @@ async function downloadSongUnsafe(
     info = bypassedResult;
   }
 
-  if (playabilityStatus.status === 'UNPLAYABLE') {
+  if (playabilityStatus?.status === 'UNPLAYABLE') {
     const errorScreen =
       playabilityStatus.error_screen as PlayerErrorMessage | null;
     throw new Error(
@@ -375,7 +432,12 @@ async function iterableStreamToProcessedUint8Array(
         'writeFile',
         safeVideoName,
         Buffer.concat(
-          await downloadChunks(stream, contentLength, sendFeedback, increasePlaylistProgress),
+          await downloadChunks(
+            stream,
+            contentLength,
+            sendFeedback,
+            increasePlaylistProgress,
+          ),
         ),
       );
 
@@ -388,7 +450,7 @@ async function iterableStreamToProcessedUint8Array(
           }),
           ratio,
         );
-        increasePlaylistProgress(0.15 + (ratio * 0.85));
+        increasePlaylistProgress(0.15 + ratio * 0.85);
       });
 
       const safeVideoNameWithExtension = `${safeVideoName}.${extension}`;
@@ -516,10 +578,17 @@ export async function downloadPlaylist(givenUrl?: string | URL) {
     return;
   }
 
-  if (!playlist || !playlist.items || playlist.items.length === 0) {
+  if (
+    !playlist ||
+    !playlist.items ||
+    playlist.items.length === 0 ||
+    !playlist.header ||
+    !('title' in playlist.header)
+  ) {
     sendError(
       new Error(t('plugins.downloader.backend.feedback.playlist-is-empty')),
     );
+    return;
   }
 
   const normalPlaylistTitle = playlist.header?.title?.text;
@@ -609,7 +678,7 @@ export async function downloadPlaylist(givenUrl?: string | URL) {
 
   const increaseProgress = (itemPercentage: number) => {
     const currentProgress = (counter - 1) / (items.length ?? 1);
-    const newProgress = currentProgress + (progressStep * itemPercentage);
+    const newProgress = currentProgress + progressStep * itemPercentage;
     win.setProgressBar(newProgress);
   };
 

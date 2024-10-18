@@ -22,7 +22,8 @@ const updatePlayBackSpeed = () => {
 
   const playbackSpeedElement = document.querySelector('#playback-speed-value');
   if (playbackSpeedElement) {
-    playbackSpeedElement.innerHTML = String(playbackSpeed);
+    const targetHtml = String(playbackSpeed);
+    playbackSpeedElement.innerHTML = window.trustedTypes?.defaultPolicy ? trustedTypes.defaultPolicy.createHTML(targetHtml) : targetHtml;
   }
 };
 
@@ -53,13 +54,7 @@ const observePopupContainer = () => {
       menu = getSongMenu();
     }
 
-    if (
-      menu &&
-      (
-        menu.parentElement as HTMLElement & { eventSink_: Element | null }
-      )?.eventSink_?.matches('ytmusic-menu-renderer.ytmusic-player-bar') &&
-      !menu.contains(slider)
-    ) {
+    if (menu && !menu.contains(slider)) {
       menu.prepend(slider);
       setupSliderListener();
     }
