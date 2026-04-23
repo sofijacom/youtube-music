@@ -1,14 +1,9 @@
-import type { YoutubePlayer } from '@/types/youtube-player';
+import type { MusicPlayer } from '@/types/music-player';
 import type { GetState, QueueItem } from '@/types/datahost-get-state';
 
 type StoreState = GetState;
-type Store = {
-  dispatch: (obj: {
-    type: string;
-    payload?: {
-      items?: QueueItem[];
-    };
-  }) => void;
+export type Store = {
+  dispatch: (obj: { type: string; payload?: unknown }) => void;
 
   getState: () => StoreState;
   replaceReducer: (param1: unknown) => unknown;
@@ -57,7 +52,7 @@ export interface ToastService {
 export type AppElement = HTMLElement & AppAPI;
 export type AppAPI = {
   queue: QueueAPI;
-  playerApi: YoutubePlayer;
+  playerApi: MusicPlayer;
 
   toastService: ToastService;
 

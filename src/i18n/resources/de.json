@@ -3,7 +3,7 @@
     "console": {
       "plugins": {
         "execute-failed": "Erweiterung {{pluginName}}::{{contextName}} konnte nicht ausgeführt werden",
-        "executed-at-ms": "Erweiterung {{pluginName}}::{{contextName}} ausgeführt in {{ms}}ms",
+        "executed-at-ms": "Erweiterung {{pluginName}}::{{contextName}} in {{ms}}ms ausgeführt",
         "initialize-failed": "Initialisierung der Erweiterung \"{{pluginName}}\" fehlgeschlagen",
         "load-all": "Lade alle Erweiterungen",
         "load-failed": "Laden der Erweiterung \"{{pluginName}}\" fehlgeschlagen",
@@ -150,11 +150,19 @@
           "visual-tweaks": {
             "label": "Visuelle Optimierungen",
             "submenu": {
+              "custom-window-title": {
+                "label": "Benutzerdefinierter Fenstertitel",
+                "prompt": {
+                  "label": "Benutzerdefinierten Fenstertitel eingeben: (zum Deaktivieren leer lassen)",
+                  "placeholder": "Beispiel: {{applicationName}}"
+                }
+              },
               "like-buttons": {
                 "default": "Standard",
                 "force-show": "Zeigen erzwungen",
                 "hide": "Versteckt",
-                "label": "Gefällt mir-Knopf"
+                "label": "Gefällt mir-Knopf",
+                "swap": "Gefällt mir-Knopf Reihenfolge ändern"
               },
               "remove-upgrade-button": "Upgrade-Schaltfläche entfernen",
               "theme": {
@@ -201,8 +209,8 @@
       "restart": "Anwendung neu starten",
       "show": "Fenster anzeigen",
       "tooltip": {
-        "default": "YouTube Musik",
-        "with-song-info": "YouTube Musik: {{artist}} - {{title}}"
+        "default": "{{applicationName}}",
+        "with-song-info": "{{applicationName}}: {{artist}} - {{title}}"
       }
     }
   },
@@ -230,7 +238,8 @@
           "submenu": {
             "percent": "{{ratio}}%"
           }
-        }
+        },
+        "enable-seekbar": "Suchleisten-Design aktivieren"
       },
       "name": "Thema aus Albumfarbe"
     },
@@ -279,6 +288,13 @@
       },
       "name": "Ambiente-Modus"
     },
+    "amuse": {
+      "description": "Fügt {{applicationName}} Unterstützung für das Amuse \"Spielt gerade\"-Widget von 6K Labs hinzu",
+      "name": "Amuse",
+      "response": {
+        "query": "Amuse API-Server läuft. /query für Liedinformationen."
+      }
+    },
     "api-server": {
       "description": "Fügt einen API-Server hinzu, um die Wiedergabe zu steuern",
       "dialog": {
@@ -306,6 +322,22 @@
         "hostname": {
           "label": "Hostname"
         },
+        "https": {
+          "label": "HTTPS & Zertifikate",
+          "submenu": {
+            "cert": {
+              "dialogTitle": "HTTPS Zertifikat Datei auswählen",
+              "label": "Zertifikate Datei (.crt/.pem)"
+            },
+            "enable-https": {
+              "label": "HTTPS aktivieren"
+            },
+            "key": {
+              "dialogTitle": "HTTPS privaten Schlüssel Datei auswählen",
+              "label": "Privater Schlüssel Datei (.key/.pem)"
+            }
+          }
+        },
         "port": {
           "label": "Port"
         }
@@ -326,16 +358,40 @@
       "description": "Kompressor auf Audio anwenden (senkt die Lautstärke der lautesten Teile des Signals und hebt die Lautstärke der leisesten Teile an)",
       "name": "Audio-Komprimierer"
     },
+    "auth-proxy-adapter": {
+      "description": "Unterstützung für Proxy-Authentifizierungsdienste",
+      "menu": {
+        "disable": "Proxy-Adapter deaktivieren",
+        "enable": "Proxy-Adapter aktivieren",
+        "hostname": {
+          "label": "Hostname"
+        },
+        "port": {
+          "label": "Port"
+        }
+      },
+      "name": "Authentifizierungs-Proxyadapter",
+      "prompt": {
+        "hostname": {
+          "label": "Hostnamen eingeben für lokalen Proxy-Server (Neustart erforderlich):",
+          "title": "Proxy Hostname"
+        },
+        "port": {
+          "label": "Geben Sie den Port für den lokalen Proxyserver ein (Neustart erforderlich):",
+          "title": "Proxy Port"
+        }
+      }
+    },
     "blur-nav-bar": {
       "description": "Macht Navigationsleiste durchsichtig und unscharf",
       "name": "Verschwommene Navigationsleiste"
     },
     "bypass-age-restrictions": {
-      "description": "Youtubes Altersbestätigung umgehen",
+      "description": "Music Player Altersbestätigung umgehen",
       "name": "Altersbeschränkungen umgehen"
     },
     "captions-selector": {
-      "description": "Untertitelwähler für YouTube Music-Audio-Lieder",
+      "description": "Untertitelwähler für {{applicationName}}-Audio-Lieder",
       "menu": {
         "autoload": "Wähle automatisch den zuletzt verwendeten Untertitel",
         "disable-captions": "Standardmäßig keine Untertitel"
@@ -350,7 +406,23 @@
       },
       "templates": {
         "title": "Untertitelwähler öffnen"
+      },
+      "toast": {
+        "caption-changed": "Untertitel gewechselt zu {{language}}",
+        "caption-disabled": "Untertitel deaktiviert",
+        "no-captions": "Keine Untertitel für dieses Lied verfügbar"
       }
+    },
+    "clock": {
+      "description": "Füge eine Uhr der Navigationsleiste hinzu",
+      "menu": {
+        "format": {
+          "24-hour-format": "24-Stunden Format",
+          "display-seconds": "Sekunden anzeigen",
+          "label": "Format"
+        }
+      },
+      "name": "Uhr"
     },
     "compact-sidebar": {
       "description": "Seitenleiste immer in den kompakten Modus setzen",
@@ -378,6 +450,19 @@
         }
       }
     },
+    "custom-output-device": {
+      "description": "Einen maßgeschneiderten Ausgabemedienträger für Lieder einrichten",
+      "menu": {
+        "device-selector": "Gerät auswählen"
+      },
+      "name": "Benutzerdefiniertes Ausgabegerät",
+      "prompt": {
+        "device-selector": {
+          "label": "Wähle das Ausgabegerät, welches benutzt werden soll",
+          "title": "Wähle ein Ausgabegerät"
+        }
+      }
+    },
     "disable-autoplay": {
       "description": "Startet Lied im pausierten Modus",
       "menu": {
@@ -400,8 +485,16 @@
         "disconnected": "Getrennt",
         "hide-duration-left": "Verbleibende Zeit verstecken",
         "hide-github-button": "Knopf mit Link zu GitHub ausblenden",
-        "play-on-youtube-music": "Auf YouTube Music abspielen",
-        "set-inactivity-timeout": "Inaktivitätstimeout setzen"
+        "play-on-application": "Auf {{applicationName}} abspielen",
+        "set-inactivity-timeout": "Inaktivitätstimeout setzen",
+        "set-status-display-type": {
+          "label": "Status Text",
+          "submenu": {
+            "application": "Hört {{applicationName}}",
+            "artist": "Hört {artist} zu",
+            "title": "Du hörst {song title}"
+          }
+        }
       },
       "name": "Discords Aktivitätsstatus",
       "prompt": {
@@ -484,6 +577,18 @@
         "button": "Herunterladen"
       }
     },
+    "equalizer": {
+      "description": "Fügt einen Equalizer zum Player hinzu",
+      "menu": {
+        "presets": {
+          "label": "Vorgaben",
+          "list": {
+            "bass-booster": "Bass-Verstärker"
+          }
+        }
+      },
+      "name": "Equalizer"
+    },
     "exponential-volume": {
       "description": "Macht den Lautstärkeregler exponentiell, damit es einfacher ist leise Lautstärken zu wählen.",
       "name": "Exponentielle Lautstärke"
@@ -504,7 +609,7 @@
       "menu": {
         "romanized-lyrics": "Romanisierte Songtexte"
       },
-      "name": "Liedtexte von Genius",
+      "name": "Songtexte von Genius",
       "renderer": {
         "fetched-lyrics": "Liedtexte für Genius abgerufen"
       }
@@ -530,7 +635,7 @@
         "permission": {
           "all": "Gästen erlauben, Wiederhabeliste und Player zu bedienen",
           "host-only": "Nur der Host kann die Playlist und den Player kontrollieren",
-          "playlist": "Gäste das Kontrollieren der Playlist erlauben"
+          "playlist": "Gästen das Kontrollieren der Playlist erlauben"
         },
         "set-permission": "Kontrollberechtigung ändern",
         "status": {
@@ -557,7 +662,15 @@
     },
     "navigation": {
       "description": "Vorwärts/Zurück Navigationspfeile direkt in die Oberfläche integriert - wie in deinem geliebten Browser",
-      "name": "Navigation"
+      "name": "Navigation",
+      "templates": {
+        "back": {
+          "title": "Zur vorherigen Seite gehen"
+        },
+        "forward": {
+          "title": "Zur nächsten Seite gehen"
+        }
+      }
     },
     "no-google-login": {
       "description": "Googles Anmelden-Knöpfe und -Links von der Oberfläche entfernen",
@@ -580,6 +693,10 @@
         "unpause-notification": "Benachrichtigungen beim Pausieren anzeigen"
       },
       "name": "Benachrichtigungen"
+    },
+    "performance-improvement": {
+      "description": "Leistung durch Aktivieren experimenteller Skripte verbessern",
+      "name": "Leistungs Verbesserung [Beta]"
     },
     "picture-in-picture": {
       "description": "Erlaubt die App in den Bild-im-Bild-Modus zu wechseln",
@@ -645,7 +762,12 @@
         }
       },
       "description": "Erlaubt die Videoqualität über einen Knopf auf dem Video",
-      "name": "Videoqualitätsänderer"
+      "name": "Videoqualitätsänderer",
+      "renderer": {
+        "quality-settings-button": {
+          "label": "Videoqualität ändern"
+        }
+      }
     },
     "scrobbler": {
       "description": "Scrobbling-Unterstützung aktivieren (z.B. für last.fm, Listenbrainz)",
@@ -664,6 +786,8 @@
         "listenbrainz": {
           "token": "ListenBrainz-Benutzer-Token eintragen"
         },
+        "scrobble-alternative-artist": "Benutze Alternative Künstler",
+        "scrobble-alternative-title": "Nutze alternative Titel",
         "scrobble-other-media": "Andere Medien scrobbeln"
       },
       "name": "Scrobbler",
@@ -714,10 +838,28 @@
     "synced-lyrics": {
       "description": "Bietet synchronisierte Liedtexte zu Songs, verwendet Anbieter wie LRClib.",
       "errors": {
-        "fetch": "⚠️ - Beim Abrufen des Liedtexts ist ein Fehler aufgetreten. Bitte versuchen Sie es später nochmal.",
-        "not-found": "⚠️ - Kein Text für diesen Song gefunden."
+        "fetch": "⚠️ - \tBeim Abrufen des Liedtexts ist ein Fehler aufgetreten. \n\tBitte versuchen Sie es später nochmal.",
+        "not-found": "⚠️ Kein Text für diesen Song gefunden."
       },
       "menu": {
+        "convert-chinese-character": {
+          "label": "Chinesische Zeichen Umwandeln",
+          "submenu": {
+            "disabled": {
+              "label": "Deaktiviert",
+              "tooltip": "Chinesische Zeichenkonvertierung deaktivieren"
+            },
+            "simplified-to-traditional": {
+              "label": "Vereinfacht zu Traditionell",
+              "tooltip": "Vereinfachtes Chinesisch in traditionelles Chinesisch umwandeln"
+            },
+            "traditional-to-simplified": {
+              "label": "Traditionell zu Vereinfacht",
+              "tooltip": "Traditionelles Chinesisch in vereinfachtes Chinesisch umwandeln"
+            }
+          },
+          "tooltip": "Chinesische Zeichen in traditionell oder vereinfacht umwandeln"
+        },
         "default-text-string": {
           "label": "Standardzeichen zwischen Texten",
           "tooltip": "Standardzeichen für die Lücke zwischen Songtexten auswählen"
@@ -725,6 +867,10 @@
         "line-effect": {
           "label": "Zeileneffekt",
           "submenu": {
+            "fancy": {
+              "label": "schick",
+              "tooltip": "Verwende große, app-ähnliche Effekte in der aktuellen Zeile"
+            },
             "focus": {
               "label": "Fokussieren",
               "tooltip": "Nur aktive Zeile weiß darstellen"
@@ -744,8 +890,20 @@
           "label": "Den Songtext perfekt synchronisieren",
           "tooltip": "Auf die Millisekunde genau berechnen, wann die nächste Zeile angezeigt werden soll (Kann Einfluss auf die Leistung haben)"
         },
+        "preferred-provider": {
+          "label": "bevorzugter Anbieter",
+          "none": {
+            "label": "Nichts",
+            "tooltip": "Kein bevorzugter Anbieter"
+          },
+          "tooltip": "Standardanbieter auswählen"
+        },
+        "romanization": {
+          "label": "Lateinische Umschrift anzeigen",
+          "tooltip": "Wenn der Liedtext in einer anderen Schrift ist, zeige nach Möglichkeit eine Version in lateinischer Schrift an."
+        },
         "show-lyrics-even-if-inexact": {
-          "label": "Zeige die Liedtexte, auch wenn sie ungenau sind.",
+          "label": "Songtext anzeigen, auch wenn er ungenau ist",
           "tooltip": "Die Erweiterung sucht mit anderen Suchparameter nochmals, wenn der Song nicht gefunden wurde.\nEs kann sein, dass das Ergebnis von der zweiten Anfrage nicht genau ist."
         },
         "show-time-codes": {
@@ -755,12 +913,12 @@
       },
       "name": "Synchronisierte Texte",
       "refetch-btn": {
-        "fetching": "Hole Songtext...",
-        "normal": "Songtext neu holen"
+        "fetching": "Laden...",
+        "normal": "Songtext neu laden"
       },
       "warnings": {
         "duration-mismatch": "⚠️ - Es kann sein, dass die Synchronization nicht stimmt, da die Songdauer nicht übereinstimmt.",
-        "inexact": "⚠️ - Es ist Möglich, dass der Songtext für diesen Song nicht übereinstimmt.",
+        "inexact": "⚠️ - Es ist möglich, dass der Songtext für diesen Song nicht übereinstimmt.",
         "instrumental": "⚠️ - Das ist ein instrumentales Lied"
       }
     },
@@ -772,9 +930,34 @@
       "description": "Fügt ein TouchBar-Widget für macOS-Benutzer hinzu",
       "name": "TouchBar"
     },
+    "transparent-player": {
+      "description": "Macht das Player-Fenster transparent",
+      "menu": {
+        "opacity": {
+          "label": "Hintergrund-Sichtbarkeit",
+          "submenu": {
+            "percent": "{{opacity}}%"
+          }
+        },
+        "type": {
+          "label": "Typ",
+          "submenu": {
+            "acrylic": "Acryl",
+            "mica": "Mica",
+            "none": "Nichts",
+            "tabbed": "Mit Registerkarten"
+          }
+        }
+      },
+      "name": "Transparenter Player"
+    },
     "tuna-obs": {
       "description": "Integration mit dem OBS-Plugin Tuna",
       "name": "Tuna OBS"
+    },
+    "unobtrusive-player": {
+      "description": "Verhindert das Aufpoppen des Spielers während ein Song gespielt wird",
+      "name": "Unauffälliger Player"
     },
     "video-toggle": {
       "description": "Fügt einen Knopf hinzu, um zwischen Video-/Liedmodus zu wechseln. kann auch genutzt werden, um den ganzen Videoabschnitt zu entfernen",
@@ -799,7 +982,8 @@
       },
       "name": "Videoumschalter",
       "templates": {
-        "button": "Lied"
+        "button-song": "Lied",
+        "button-video": "Video"
       }
     },
     "visualizer": {

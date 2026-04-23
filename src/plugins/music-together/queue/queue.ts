@@ -3,10 +3,11 @@ import { mapQueueItem } from './utils';
 
 import { t } from '@/i18n';
 
+import { getDefaultProfile, type Profile, type VideoData } from '../types';
+
 import type { ConnectionEventUnion } from '@/plugins/music-together/connection';
-import type { Profile, VideoData } from '../types';
 import type { QueueItem } from '@/types/datahost-get-state';
-import type { QueueElement } from '@/types/queue';
+import type { QueueElement, Store } from '@/types/queue';
 
 const getHeaderPayload = (() => {
   let payload: {
@@ -177,21 +178,46 @@ export class Queue {
     if (!items) return false;
 
     this.internalDispatch = true;
-    this._videoList.push(...videos);
+    this._videoList = this._videoList.map(
+      (it) =>
+        ({
+          videoId: it.videoId,
+          ownerId: it.ownerId ?? this.owner!.id,
+        }) satisfies VideoData,
+    );
+
+    const state = this.queue.queue.store.store.getState();
+
     this.queue?.dispatch({
       type: 'ADD_ITEMS',
       payload: {
-        nextQueueItemId:
-          this.queue.queue.store.store.getState().queue.nextQueueItemId,
+        nextQueueItemId: state.queue.nextQueueItemId,
         index:
           index ??
-          this.queue.queue.store.store.getState().queue.items.length ??
+          (state.queue.items.length ? state.queue.items.length - 1 : null) ??
           0,
         items,
         shuffleEnabled: false,
         shouldAssignIds: true,
       },
     });
+
+    const insertedItem = this._videoList[index ?? this._videoList.length];
+    if (
+      !insertedItem ||
+      (insertedItem.videoId !== videos[0].videoId &&
+        insertedItem.ownerId !== videos[0].ownerId)
+    ) {
+      this._videoList.splice(
+        index ?? this._videoList.length,
+        0,
+        ...videos.map((it) => ({
+          ...it,
+          ownerId: it.ownerId ?? this.owner?.id,
+        })),
+      );
+    }
+
     this.internalDispatch = false;
     setTimeout(() => {
       this.initQueue();
@@ -252,7 +278,9 @@ export class Queue {
   }
 
   on(listener: QueueEventListener) {
-    this.listeners.push(listener);
+    if (!this.listeners.includes(listener)) {
+      this.listeners.push(listener);
+    }
   }
 
   off(listener: QueueEventListener) {
@@ -266,7 +294,8 @@ export class Queue {
     }
 
     if (this.originalDispatch)
-      this.queue.queue.store.store.dispatch = this.originalDispatch;
+      this.queue.queue.store.store.dispatch = this
+        .originalDispatch as Store['dispatch'];
   }
 
   injection() {
@@ -285,6 +314,11 @@ export class Queue {
       if (!this.internalDispatch) {
         if (event.type === 'CLEAR') {
           this.ignoreFlag = true;
+          this.broadcast({
+            type: 'CLEAR_QUEUE',
+            payload: null,
+          });
+          return;
         }
         if (event.type === 'ADD_ITEMS') {
           if (this.ignoreFlag) {
@@ -295,11 +329,21 @@ export class Queue {
                   videoId: it!.videoId,
                   ownerId: this.owner!.id,
                 }) satisfies VideoData,
-              event.payload!.items!,
+              (
+                event.payload! as {
+                  items: QueueItem[];
+                }
+              ).items,
             );
-            const index = this._videoList.length + videoList.length - 1;
+            const index = this._videoList.length;
 
             if (videoList.length > 0) {
+              this._videoList = [
+                ...videoList.map((it) => ({
+                  ...it,
+                  ownerId: it.ownerId ?? this.owner?.id,
+                })),
+              ];
               this.broadcast({
                 // play
                 type: 'ADD_SONGS',
@@ -308,7 +352,7 @@ export class Queue {
                 },
                 after: [
                   {
-                    type: 'SYNC_PROGRESS',
+                    type: 'SET_INDEX',
                     payload: {
                       index,
                     },
@@ -323,19 +367,45 @@ export class Queue {
               }
             ).items.length === 1
           ) {
+            const videoList = mapQueueItem(
+              (it) =>
+                ({
+                  videoId: it!.videoId,
+                  ownerId: this.owner!.id,
+                }) satisfies VideoData,
+              (
+                event.payload! as {
+                  items: QueueItem[];
+                }
+              ).items,
+            );
+            this._videoList.splice(
+              event.payload && Object.hasOwn(event.payload, 'index')
+                ? (
+                    event.payload as {
+                      index: number;
+                    }
+                  ).index
+                : this._videoList.length,
+              0,
+              ...videoList.map((it) => ({
+                ...it,
+                ownerId: it.ownerId ?? this.owner?.id,
+              })),
+            );
             this.broadcast({
               // add playlist
               type: 'ADD_SONGS',
               payload: {
-                // index: (event.payload as any).index,
-                videoList: mapQueueItem(
-                  (it) =>
-                    ({
-                      videoId: it!.videoId,
-                      ownerId: this.owner!.id,
-                    }) satisfies VideoData,
-                  event.payload!.items!,
-                ),
+                index:
+                  event.payload && Object.hasOwn(event.payload, 'index')
+                    ? (
+                        event.payload as {
+                          index: number;
+                        }
+                      ).index
+                    : undefined,
+                videoList,
               },
             });
           }
@@ -407,7 +477,13 @@ export class Queue {
           },
         },
       };
-      this.originalDispatch?.call(fakeContext, event);
+      this.originalDispatch?.call(
+        fakeContext,
+        event as {
+          type: string;
+          payload?: { items?: QueueItem[] | undefined } | undefined;
+        },
+      );
     };
   }
 
@@ -463,14 +539,16 @@ export class Queue {
 
     allQueue.forEach((queue) => {
       const list = Array.from(
-        queue?.querySelectorAll<HTMLElement>('ytmusic-player-queue-item') ?? [],
+        queue?.querySelectorAll<HTMLElement>(
+          '#contents > ytmusic-player-queue-item,#contents > ytmusic-playlist-panel-video-wrapper-renderer > #primary-renderer > ytmusic-player-queue-item',
+        ) ?? [],
       );
 
       list.forEach((item, index: number | undefined) => {
         if (typeof index !== 'number') return;
 
         const id = this._videoList[index]?.ownerId;
-        const data = this.getProfile(id);
+        let data = this.getProfile(id);
 
         const profile =
           item.querySelector<HTMLImageElement>('.music-together-owner') ??
@@ -485,6 +563,10 @@ export class Queue {
         name.classList.add('music-together-name');
         name.textContent =
           data?.name ?? t('plugins.music-together.internal.unknown-user');
+
+        if (!data?.name && !data?.handleId) {
+          data = getDefaultProfile(data?.id ?? '');
+        }
 
         if (data) {
           profile.dataset.thumbnail = data.thumbnail ?? '';

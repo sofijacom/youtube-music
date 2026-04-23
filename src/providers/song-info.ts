@@ -1,8 +1,8 @@
-import { BrowserWindow, ipcMain, nativeImage, net } from 'electron';
+import { type BrowserWindow, ipcMain, nativeImage, net } from 'electron';
 
 import { Mutex } from 'async-mutex';
 
-import config from '@/config';
+import * as config from '@/config';
 
 import type { GetPlayerResponse } from '@/types/get-player-response';
 
@@ -16,7 +16,7 @@ export enum MediaType {
    */
   OriginalMusicVideo = 'ORIGINAL_MUSIC_VIDEO',
   /**
-   * Normal YouTube video uploaded by a user
+   * Normal video uploaded by a user
    */
   UserGeneratedContent = 'USER_GENERATED_CONTENT',
   /**
@@ -28,7 +28,9 @@ export enum MediaType {
 
 export interface SongInfo {
   title: string;
+  alternativeTitle?: string;
   artist: string;
+  artistUrl?: string;
   views: number;
   uploadDate?: string;
   imageSrc?: string | null;
@@ -41,6 +43,7 @@ export interface SongInfo {
   videoId: string;
   playlistId?: string;
   mediaType: MediaType;
+  tags?: string[];
 }
 
 // Grab the native image using the src
@@ -50,7 +53,7 @@ export const getImage = async (src: string): Promise<Electron.NativeImage> => {
     Buffer.from(await result.arrayBuffer()),
   );
   if (output.isEmpty() && !src.endsWith('.jpg') && src.includes('.jpg')) {
-    // Fix hidden webp files (https://github.com/th-ch/youtube-music/issues/315)
+    // Fix hidden webp files (https://github.com/pear-devs/pear-desktop/issues/315)
     return getImage(src.slice(0, src.lastIndexOf('.jpg') + 4));
   }
 
@@ -68,7 +71,9 @@ const handleData = async (
   // Fill songInfo with empty values
   const songInfo: SongInfo = {
     title: '',
+    alternativeTitle: '',
     artist: '',
+    artistUrl: '',
     views: 0,
     uploadDate: '',
     imageSrc: '',
@@ -81,6 +86,7 @@ const handleData = async (
     videoId: '',
     playlistId: '',
     mediaType: MediaType.Audio,
+    tags: [],
   } satisfies SongInfo;
 
   const microformat = data.microformat?.microformatDataRenderer;
@@ -89,8 +95,15 @@ const handleData = async (
     songInfo.url = microformat.urlCanonical?.split('&')[0];
     songInfo.playlistId =
       new URL(microformat.urlCanonical).searchParams.get('list') ?? '';
+    if (microformat.pageOwnerDetails?.externalChannelId) {
+      songInfo.artistUrl = `https://music.\u0079\u006f\u0075\u0074\u0075\u0062\u0065.com/channel/${microformat.pageOwnerDetails.externalChannelId}`;
+    }
     // Used for options.resumeOnStart
     config.set('url', microformat.urlCanonical);
+    songInfo.alternativeTitle = microformat.linkAlternates.find(
+      (link) => link.title,
+    )?.title;
+    songInfo.tags = Array.isArray(microformat.tags) ? microformat.tags : [];
   }
 
   const { videoDetails } = data;
@@ -102,7 +115,7 @@ const handleData = async (
     songInfo.elapsedSeconds = videoDetails.elapsedSeconds;
     songInfo.isPaused = videoDetails.isPaused;
     songInfo.videoId = videoDetails.videoId;
-    songInfo.album = data?.videoDetails?.album; // Will be undefined if video exist
+    songInfo.album = videoDetails.album; // Will be undefined if video exist
 
     switch (videoDetails?.musicVideoType) {
       case 'MUSIC_VIDEO_TYPE_ATV':
@@ -140,19 +153,27 @@ const handleData = async (
     }
 
     const thumbnails = videoDetails.thumbnail?.thumbnails;
-    songInfo.imageSrc = thumbnails.at(-1)?.url.split('?')[0];
+    songInfo.imageSrc = thumbnails?.at(-1)?.url?.split('?')?.at(0);
+
+    if (
+      songInfo.imageSrc &&
+      !(await net.fetch(songInfo.imageSrc, { method: 'HEAD' })).ok
+    ) {
+      songInfo.imageSrc = thumbnails.at(-1)?.url;
+    }
+
     if (songInfo.imageSrc) songInfo.image = await getImage(songInfo.imageSrc);
 
-    win.webContents.send('ytmd:update-song-info', songInfo);
+    win.webContents.send('peard:update-song-info', songInfo);
   }
 
   return songInfo;
 };
 
 export enum SongInfoEvent {
-  VideoSrcChanged = 'ytmd:video-src-changed',
-  PlayOrPaused = 'ytmd:play-or-paused',
-  TimeChanged = 'ytmd:time-changed',
+  VideoSrcChanged = 'peard:video-src-changed',
+  PlayOrPaused = 'peard:play-or-paused',
+  TimeChanged = 'peard:time-changed',
 }
 
 // This variable will be filled with the callbacks once they register
@@ -163,7 +184,7 @@ export type SongInfoCallback = (
 const callbacks: Set<SongInfoCallback> = new Set();
 
 // This function will allow plugins to register callback that will be triggered when data changes
-const registerCallback = (callback: SongInfoCallback) => {
+export const registerCallback = (callback: SongInfoCallback) => {
   callbacks.add(callback);
 };
 
@@ -172,7 +193,7 @@ const registerProvider = (win: BrowserWindow) => {
   let songInfo: SongInfo | null = null;
 
   // This will be called when the song-info-front finds a new request with song data
-  ipcMain.on('ytmd:video-src-changed', async (_, data: GetPlayerResponse) => {
+  ipcMain.on('peard:video-src-changed', async (_, data: GetPlayerResponse) => {
     const tempSongInfo = await dataMutex.runExclusive<SongInfo | null>(
       async () => {
         songInfo = await handleData(data, win);
@@ -187,7 +208,7 @@ const registerProvider = (win: BrowserWindow) => {
     }
   });
   ipcMain.on(
-    'ytmd:play-or-paused',
+    'peard:play-or-paused',
     async (
       _,
       {
@@ -214,7 +235,7 @@ const registerProvider = (win: BrowserWindow) => {
     },
   );
 
-  ipcMain.on('ytmd:time-changed', async (_, seconds: number) => {
+  ipcMain.on('peard:time-changed', async (_, seconds: number) => {
     const tempSongInfo = await dataMutex.runExclusive<SongInfo | null>(() => {
       if (!songInfo) {
         return null;
@@ -261,5 +282,4 @@ export function cleanupName(name: string): string {
   return name;
 }
 
-export default registerCallback;
 export const setupSongInfo = registerProvider;

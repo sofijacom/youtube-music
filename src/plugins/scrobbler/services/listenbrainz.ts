@@ -2,6 +2,8 @@ import { net } from 'electron';
 
 import { ScrobblerBase } from './base';
 
+import { APPLICATION_NAME } from '@/i18n';
+
 import type { SetConfType } from '../main';
 import type { SongInfo } from '@/providers/song-info';
 import type { ScrobblerPluginConfig } from '../index';
@@ -48,7 +50,7 @@ export class ListenbrainzScrobbler extends ScrobblerBase {
       return;
     }
 
-    const body = createRequestBody('playing_now', songInfo);
+    const body = createRequestBody('playing_now', songInfo, config);
     submitListen(body, config);
   }
 
@@ -64,7 +66,7 @@ export class ListenbrainzScrobbler extends ScrobblerBase {
       return;
     }
 
-    const body = createRequestBody('single', songInfo);
+    const body = createRequestBody('single', songInfo, config);
     body.payload[0].listened_at = Math.trunc(Date.now() / 1000);
 
     submitListen(body, config);
@@ -74,14 +76,25 @@ export class ListenbrainzScrobbler extends ScrobblerBase {
 function createRequestBody(
   listenType: string,
   songInfo: SongInfo,
+  config: ScrobblerPluginConfig,
 ): ListenbrainzRequestBody {
+  const title =
+    config.alternativeTitles && songInfo.alternativeTitle !== undefined
+      ? songInfo.alternativeTitle
+      : songInfo.title;
+
+  const artist =
+    config.alternativeArtist && songInfo.tags?.at(0) !== undefined
+      ? songInfo.tags?.at(0)
+      : songInfo.artist;
+
   const trackMetadata = {
-    artist_name: songInfo.artist,
-    track_name: songInfo.title,
+    artist_name: artist,
+    track_name: title,
     release_name: songInfo.album ?? undefined,
     additional_info: {
-      media_player: 'YouTube Music Desktop App',
-      submission_client: 'YouTube Music Desktop App - Scrobbler Plugin',
+      media_player: `${APPLICATION_NAME} Desktop App`,
+      submission_client: `${APPLICATION_NAME} Desktop App - Scrobbler Plugin`,
       origin_url: songInfo.url,
       duration: songInfo.songDuration,
     },

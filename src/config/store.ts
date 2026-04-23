@@ -1,13 +1,49 @@
-import Store from 'electron-store';
-
-import defaults from './defaults';
+import { defaultConfig as defaults } from './defaults';
 
 import { DefaultPresetList, type Preset } from '@/plugins/downloader/types';
 
-// prettier-ignore
-export type IStore = InstanceType<typeof import('conf/dist/source/index').default<Record<string, unknown>>>;
+import type { SyncedLyricsPluginConfig } from '@/plugins/synced-lyrics/types';
+
+// HACK: electron-store is ESM, but rolldown has a bug that prevents it from being imported properly in CommonJS context, so we have to use require here
+// eslint-disable-next-line prettier/prettier
+const Store = (
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require('electron-store') as {
+    default: typeof import('electron-store').default;
+  }
+).default;
+
+export type IStore = InstanceType<
+  typeof import('conf').default<Record<string, unknown>>
+>;
 
 const migrations = {
+  '>=3.10.0'(store: IStore) {
+    const lyricGeniusConfig = store.get('plugins.lyrics-genius') as
+      | {
+          enabled?: boolean;
+          romanizedLyrics?: boolean;
+        }
+      | undefined;
+
+    if (lyricGeniusConfig) {
+      const syncedLyricsConfig = store.get('plugins.synced-lyrics') as
+        | SyncedLyricsPluginConfig
+        | undefined;
+
+      if (
+        !syncedLyricsConfig ||
+        syncedLyricsConfig?.enabled !== lyricGeniusConfig?.enabled
+      ) {
+        store.set('plugins.synced-lyrics', {
+          ...syncedLyricsConfig,
+          enabled: lyricGeniusConfig.enabled,
+        });
+      }
+
+      store.delete('plugins.lyrics-genius');
+    }
+  },
   '>=3.3.0'(store: IStore) {
     const lastfmConfig = store.get('plugins.lastfm') as {
       enabled?: boolean;
@@ -83,7 +119,10 @@ const migrations = {
   '>=2.1.3'(store: IStore) {
     const listenAlong = store.get('plugins.discord.listenAlong');
     if (listenAlong !== undefined) {
-      store.set('plugins.discord.playOnYouTubeMusic', listenAlong);
+      store.set(
+        'plugins.discord.playOn\u0059\u006f\u0075\u0054\u0075\u0062\u0065\u004d\u0075\u0073\u0069\u0063',
+        listenAlong,
+      );
       store.delete('plugins.discord.listenAlong');
     }
   },
@@ -228,11 +267,11 @@ const migrations = {
   },
 };
 
-export default new Store({
+export const store = new Store({
   defaults: {
     ...defaults,
     // README: 'plugin' uses deepmerge to populate the default values, so it is not necessary to include it here
   },
   clearInvalidConfig: false,
   migrations,
-}) as Store & IStore;
+});

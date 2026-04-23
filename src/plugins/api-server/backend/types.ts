@@ -1,6 +1,7 @@
-import { OpenAPIHono as Hono } from '@hono/zod-openapi';
-import { serve } from '@hono/node-server';
+import { type OpenAPIHono as Hono } from '@hono/zod-openapi';
+import { type serve } from '@hono/node-server';
 
+import type { RepeatMode, VolumeState } from '@/types/datahost-get-state';
 import type { BackendContext } from '@/types/contexts';
 import type { SongInfo } from '@/providers/song-info';
 import type { APIServerConfig } from '../config';
@@ -11,8 +12,11 @@ export type BackendType = {
   server?: ReturnType<typeof serve>;
   oldConfig?: APIServerConfig;
   songInfo?: SongInfo;
+  currentRepeatMode?: RepeatMode;
+  volumeState?: VolumeState;
+  injectWebSocket?: (server: ReturnType<typeof serve>) => void;
 
-  init: (ctx: BackendContext<APIServerConfig>) => Promise<void>;
-  run: (hostname: string, port: number) => void;
+  init: (ctx: BackendContext<APIServerConfig>) => void;
+  run: (config: APIServerConfig) => void;
   end: () => void;
 };

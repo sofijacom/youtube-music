@@ -1,38 +1,48 @@
+import type { SongInfo } from '@/providers/song-info';
+import type { ProviderName } from './providers';
+
 export type SyncedLyricsPluginConfig = {
   enabled: boolean;
+  preferredProvider?: ProviderName;
   preciseTiming: boolean;
   showTimeCodes: boolean;
-  defaultTextString: string;
+  defaultTextString: string | string[];
   showLyricsEvenIfInexact: boolean;
   lineEffect: LineEffect;
+  romanization: boolean;
+  convertChineseCharacter?:
+    | 'simplifiedToTraditional'
+    | 'traditionalToSimplified'
+    | 'disabled';
 };
 
 export type LineLyricsStatus = 'previous' | 'current' | 'upcoming';
 
 export type LineLyrics = {
-  index: number;
   time: string;
   timeInMs: number;
-  text: string;
   duration: number;
+
+  text: string;
   status: LineLyricsStatus;
 };
 
-export type PlayPauseEvent = {
-  isPaused: boolean;
-  elapsedSeconds: number;
-};
+export type LineEffect = 'fancy' | 'scale' | 'offset' | 'focus';
 
-export type LineEffect = 'scale' | 'offset' | 'focus';
+export interface LyricResult {
+  title: string;
+  artists: string[];
 
-export type LRCLIBSearchResponse = {
-  id: number;
+  lyrics?: string;
+  lines?: LineLyrics[];
+}
+
+// prettier-ignore
+export type SearchSongInfo = Pick<SongInfo, 'title' | 'alternativeTitle' | 'artist' | 'album' | 'songDuration' | 'videoId' | 'tags'>;
+
+export interface LyricProvider {
   name: string;
-  trackName: string;
-  artistName: string;
-  albumName: string;
-  duration: number;
-  instrumental: boolean;
-  plainLyrics: string;
-  syncedLyrics: string;
-}[];
+  baseUrl: string;
+
+  search(songInfo: SearchSongInfo): Promise<LyricResult | null>;
+}
